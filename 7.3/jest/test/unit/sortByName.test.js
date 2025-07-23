@@ -7,11 +7,18 @@ describe("Books names test suit", () => {
         "Гарри Поттер",
         "Властелин Колец",
         "Волшебник изумрудного города",
-      ])
+      ]),
     ).toEqual([
       "Властелин Колец",
       "Волшебник изумрудного города",
       "Гарри Поттер",
+    ]);
+  });
+  it("Should handle equal names (return 0 branch)", () => {
+    expect(sorting.sortByName(["abc", "abc", "abc"])).toEqual([
+      "abc",
+      "abc",
+      "abc",
     ]);
   });
 });
