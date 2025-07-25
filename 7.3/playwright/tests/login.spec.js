@@ -10,8 +10,7 @@ test("Успешная авторизация", async ({ page }) => {
     await page.getByRole("textbox", { name: "Пароль" }).fill(PASSWORD);
     await page.getByTestId("login-submit-btn").click();
 
-    // 🔍 Добавим проверку: что авторизация успешна
-    await expect(page).toHaveURL(/cabinet|profile|dashboard/); // уточни, что открывается после входа
+    await expect(page).toHaveURL(/cabinet|profile|dashboard/);
 });
 
 test("Неуспешная авторизация с неверным паролем", async ({ page }) => {
