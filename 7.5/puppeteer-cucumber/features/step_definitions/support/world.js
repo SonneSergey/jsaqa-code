@@ -1,5 +1,5 @@
-const { setWorldConstructor } = require('@cucumber/cucumber');
-const puppeteer = require('puppeteer');
+const { setWorldConstructor } = require("@cucumber/cucumber");
+const puppeteer = require("puppeteer");
 
 class CustomWorld {
     async launchBrowser() {
@@ -14,5 +14,5 @@ class CustomWorld {
     }
 }
 
-console.log('CustomWorld loaded');
+console.log("CustomWorld loaded");
 setWorldConstructor(CustomWorld);
