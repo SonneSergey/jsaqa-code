@@ -1,0 +1,12 @@
+{
+  "name": "puppeteer-cucumber",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "cucumber-js"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^9.3.0",
+    "puppeteer": "^19.11.1",
+    "chai": "^4.3.7"
+  }
+}
