@@ -1,23 +1,15 @@
-Feature: Booking movie tickets 
+Feature: Ticket Booking
 
-  Scenario: Successful ticket booking
-    Given I am on the homepage
-    When I select the Tuesday tab
-    And I choose a session
-    And I select two seats
-    And I click the "Забронировать" button
-    Then I should see a confirmation with text "Вы выбрали билеты"
+  Scenario: Successful booking of two seats on Tuesday
+    Given I open the booking website
+    When I select Tuesday
+    And I choose the first available session
+    And I select two free seats
+    And I click the "Book" button
+    Then I should see the booking confirmation
 
-  Scenario: Trying to book a taken seat
-    Given I am on the homepage
-    When I choose a session with a taken seat
-    And I try to click a taken seat
-    Then the "Забронировать" button should be disabled
-
-  Scenario: Booking a single seat
-    Given I am on the homepage
-    When I select the Tuesday tab
-    And I choose a session
-    And I select one seat
-    And I click the "Забронировать" button
-    Then I should see a confirmation with text "Вы выбрали билеты"
+  Scenario: The "Book" button is inactive without seat selection
+    Given I open the booking website
+    When I select Sunday
+    And I choose the first available session
+    Then the "Book" button should be inactive

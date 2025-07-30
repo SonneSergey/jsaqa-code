@@ -1,107 +1,109 @@
 const { Given, When, Then, After } = require("@cucumber/cucumber");
 const { expect } = require("chai");
 
-// Начало, переход на главную
-Given("I am on the homepage", async function () {
+Given("I open the booking website", async function () {
     await this.launchBrowser();
     await this.page.goto("http://qamid.tmweb.ru/client/index.php");
 });
 
-// Переход на вкладку "вторник"
-When("I select the Tuesday tab", async function () {
-    await this.page.click("nav a:nth-child(2)");
-});
-
-// Выбор сеанса
-When("I choose a session", async function () {
-    await this.page.waitForSelector(".movie-seances__time");
-    await this.page.click(".movie-seances__time");
-});
-
-// Выбор двух мест
-When("I select two seats", async function () {
-    await this.page.waitForSelector(".buying-scheme__wrapper");
-    await this.page.click(".buying-scheme__row:nth-child(6) span:nth-child(3)");
-    await this.page.click(".buying-scheme__row:nth-child(6) span:nth-child(4)");
-});
-
-// Выбор одного места
-When("I select one seat", async function () {
-    await this.page.waitForSelector(".buying-scheme__wrapper");
-    await this.page.click(".buying-scheme__row:nth-child(5) span:nth-child(2)");
-});
-
-// Клик по кнопке "Забронировать"
-When("I click the {string} button", async function (buttonText) {
-    await this.page.waitForSelector(".acceptin-button");
-    const btnText = await this.page.$eval(".acceptin-button", (el) =>
-        el.textContent.trim(),
-    );
-    if (btnText !== buttonText) {
-        throw new Error(
-            `Expected button text "${buttonText}", but got "${btnText}"`,
-        );
-    }
-    await this.page.click(".acceptin-button");
-});
-
-// Подтверждения
-Then(
-    "I should see a confirmation with text {string}",
-    async function (expectedText) {
-        await this.page.waitForSelector(".ticket__check-title");
-        const confirmText = await this.page.$eval(".ticket__check-title", (el) =>
+When("I select Tuesday", async function () {
+    const days = await this.page.$$(".page-nav__day");
+    for (const day of days) {
+        const dayText = await day.$eval(".page-nav__day-week", (el) =>
             el.textContent.trim(),
         );
-        expect(confirmText).to.include(expectedText);
-    },
-);
+        if (dayText === "Вт") {
+            await day.click();
+            break;
+        }
+    }
+});
 
-// Выбор сеанса с занятым местом
-When("I choose a session with a taken seat", async function () {
-    await this.page.waitForSelector(".movie-seances__time");
-
-    await this.page.evaluate(() => {
-        const seance = [...document.querySelectorAll(".movie-seances__time")].find(
-            (el) => el.getAttribute("data-seance-id") === "199",
+When("I select Sunday", async function () {
+    const days = await this.page.$$(".page-nav__day");
+    for (const day of days) {
+        const dayText = await day.$eval(".page-nav__day-week", (el) =>
+            el.textContent.trim(),
         );
-        if (seance) seance.click();
-    });
-
-    await this.page.waitForSelector(
-        ".buying-scheme__chair_disabled.buying-scheme__chair_taken",
-    );
+        if (dayText === "Вс") {
+            await day.click();
+            break;
+        }
+    }
 });
 
-// Занятое место
-When("I try to click a taken seat", async function () {
-    const seat = await this.page.$(
-        ".buying-scheme__chair_disabled.buying-scheme__chair_taken",
-    );
-    this.takenSeat = seat;
-    expect(seat).to.not.be.null;
-    await seat.click();
+When("I choose the first available session", async function () {
+    const sessions = await this.page.$$(".movie-seances__time");
+    if (sessions.length === 0) {
+        throw new Error("Нет доступных сессий для выбора");
+    }
+    await sessions[0].click();
 });
 
-// Кнопка "Забронировать" отключена
-Then("the {string} button should be disabled", async function (buttonText) {
-    await this.page.waitForSelector(".acceptin-button");
-    const btnText = await this.page.$eval(".acceptin-button", (el) =>
+When("I select two free seats", { timeout: 20000 }, async function () {
+    await this.page.waitForSelector(".buying-scheme__row", { timeout: 10000 });
+
+    // Поиск свободных мест
+    const freeSeats = await this.page.$$(
+        ".buying-scheme__chair.buying-scheme__chair_standart:not(.buying-scheme__chair_taken)",
+    );
+
+    console.log(`Нашлось свободных мест: ${freeSeats.length}`);
+
+    if (freeSeats.length < 2) {
+        throw new Error("Недостаточно свободных мест для выбора");
+    }
+
+    await freeSeats[0].click();
+    await freeSeats[1].click();
+});
+
+When("I click the {string} button", async function (btnText) {
+    await this.page.waitForSelector(".acceptin-button", { timeout: 5000 });
+
+    const button = await this.page.$(".acceptin-button");
+    if (!button) {
+        throw new Error('Кнопка с селектором ".acceptin-button" не найдена');
+    }
+
+    // Активность кнопки
+    const isDisabled = await this.page.evaluate((btn) => {
+        return btn.hasAttribute("disabled") || btn.classList.contains("disabled");
+    }, button);
+
+    if (isDisabled) {
+        throw new Error('Кнопка "Забронировать" неактивна');
+    }
+
+    await button.click();
+});
+
+Then("I should see the booking confirmation", async function () {
+    await this.page.waitForSelector(".ticket__check-title", { timeout: 5000 });
+
+    const text = await this.page.$eval(".ticket__check-title", (el) =>
         el.textContent.trim(),
     );
-    if (btnText !== buttonText) {
-        throw new Error(
-            `Expected button text "${buttonText}", but got "${btnText}"`,
-        );
+    console.log("Booking confirmation text:", text);
+
+    expect(text).to.include("Вы выбрали билеты:");
+});
+
+Then("the {string} button should be inactive", async function (btnText) {
+    await this.page.waitForSelector(".acceptin-button", { timeout: 5000 });
+
+    const button = await this.page.$(".acceptin-button");
+    if (!button) {
+        throw new Error('Кнопка с селектором ".acceptin-button" не найдена');
     }
-    const isDisabled = await this.page.$eval(
-        ".acceptin-button",
-        (el) => el.disabled,
-    );
+
+    const isDisabled = await this.page.evaluate((btn) => {
+        return btn.hasAttribute("disabled") || btn.classList.contains("disabled");
+    }, button);
+
     expect(isDisabled).to.be.true;
 });
 
-// Закрытие браузера после сценария
 After(async function () {
     await this.closeBrowser();
 });

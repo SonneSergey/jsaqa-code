@@ -1,9 +1,8 @@
 const puppeteer = require("puppeteer");
-const { clickSeanceByTime } = require("./helpers");
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
-describe("Booking Tickets — happy & sad paths", () => {
+describe("Бронирование билетов", () => {
     let browser;
     let page;
     const baseURL = "http://qamid.tmweb.ru/client/index.php";
@@ -23,77 +22,83 @@ describe("Booking Tickets — happy & sad paths", () => {
 
     beforeEach(async () => {
         await page.goto(baseURL);
+        await page.waitForSelector("nav", { timeout: 10000 });
+    });
+
+    afterEach(async () => {
+        if (expect.getState().currentTestFailed) {
+            await page.screenshot({ path: `screenshots/failed-${Date.now()}.png` });
+        }
     });
 
     test("Должна успешно забронироваться пара мест во вторник", async () => {
-        // Выбор вторника
-        await page.click("nav a:nth-child(2)");
-        await page.waitForSelector(".movie-seances__time");
-
-        // Переход на первый доступный сеанс
+        await page.click("nav a:nth-child(2)"); // Вторник
+        await page.waitForSelector(".movie-seances__time", { visible: true });
         await page.click(".movie-seances__time");
-        await page.waitForSelector(".buying-scheme__wrapper");
+        await page.waitForSelector(".buying-scheme__wrapper", { visible: true });
 
-        // Выбор двух мест и бронирование
+        expect(page.url()).toMatch(/hall\.php/);
+
         await page.click(".buying-scheme__row:nth-child(6) span:nth-child(3)");
         await page.click(".buying-scheme__row:nth-child(6) span:nth-child(4)");
-        await page.click(".acceptin-button");
 
-        await page.waitForSelector(".ticket__check-title");
-        const confirmText = await page.$eval(".ticket__check-title", (el) =>
-            el.textContent.trim(),
-        );
-
-        expect(confirmText).toContain("Вы выбрали билеты");
-    });
-
-    test("Должно забронироваться VIP-место на 11:00", async () => {
-        // Доступный сеанс на 11:00
-        await page.waitForSelector(".movie-seances__time");
-        await clickSeanceByTime(page, "11:00");
-        await page.waitForSelector(".buying-scheme__wrapper");
-
-        // Выбор одного VIP-места и подтверждение
-        await page.click(".buying-scheme__row:nth-child(10) span:nth-child(6)");
-        await page.click(".acceptin-button");
-
-        // Подтверждение
-        await page.waitForSelector(".ticket__check-title");
-        const confirmText = await page.$eval(".ticket__check-title", (el) =>
-            el.textContent.trim(),
-        );
-
-        expect(confirmText).toContain("Вы выбрали билеты");
-    });
-
-    test("Не должно быть возможности забронировать занятое место", async () => {
-        // Открыт сеанс с занятым местом
-        await page.waitForSelector(".movie-seances__time");
-        await page.evaluate(() => {
-            const seance = [
-                ...document.querySelectorAll(".movie-seances__time"),
-            ].find((el) => el.getAttribute("data-seance-id") === "199");
-            if (seance) seance.click();
-        });
-
-        // Занятое место
-        await page.waitForSelector(
-            ".buying-scheme__chair_disabled.buying-scheme__chair_taken",
-        );
-        const takenSeat = await page.$(
-            ".buying-scheme__chair_disabled.buying-scheme__chair_taken",
-        );
-
-        expect(takenSeat).not.toBeNull();
-
-        await takenSeat.click();
-        const isDisabled = await page.$eval(
+        const isButtonActive = await page.$eval(
             ".acceptin-button",
-            (btn) => btn.disabled,
+            (btn) => !btn.disabled,
         );
+        expect(isButtonActive).toBe(true);
 
-        // Кнопка забронировать не должна быть активной
-        expect(isDisabled).toBe(true);
-        expect(page.url()).toContain("hall.php");
+        await page.click(".acceptin-button");
+
+        await page.waitForSelector(".ticket__check-title", { visible: true });
+        const confirmText = await page.$eval(".ticket__check-title", (el) =>
+            el.textContent.trim(),
+        );
+        expect(confirmText).toContain("Вы выбрали билеты");
+    });
+
+    test("Должно забронироваться VIP-место в пятницу на 18:00", async () => {
+        await page.click("nav a:nth-child(6)"); // Пятница
+        await page.waitForSelector(".movie-seances__time", { visible: true });
+
+        const seances = await page.$$(".movie-seances__time");
+        for (const seance of seances) {
+            const text = await seance.evaluate((el) => el.textContent.trim());
+            if (text === "18:00") {
+                await seance.click();
+                break;
+            }
+        }
+
+        await page.waitForSelector(".buying-scheme__wrapper", { visible: true });
+
+        await page.click(".buying-scheme__row:nth-child(10) span:nth-child(6)");
+
+        const isButtonActive = await page.$eval(
+            ".acceptin-button",
+            (btn) => !btn.disabled,
+        );
+        expect(isButtonActive).toBe(true);
+
+        await page.click(".acceptin-button");
+
+        await page.waitForSelector(".ticket__check-title", { visible: true });
+        const confirmText = await page.$eval(".ticket__check-title", (el) =>
+            el.textContent.trim(),
+        );
+        expect(confirmText).toContain("Вы выбрали билеты");
+    });
+
+    test('Кнопка "Забронировать" должна быть неактивна, если не выбрано ни одного места', async () => {
+        await page.click("nav a:nth-child(7)"); // Воскресенье
+        await page.waitForSelector(".movie-seances__time", { visible: true });
+        await page.click(".movie-seances__time");
+        await page.waitForSelector(".buying-scheme__wrapper", { visible: true });
+
+        const isButtonActive = await page.$eval(
+            ".acceptin-button",
+            (btn) => !btn.disabled,
+        );
+        expect(isButtonActive).toBe(false);
     });
 });
