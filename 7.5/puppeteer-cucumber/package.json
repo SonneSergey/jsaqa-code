@@ -2,7 +2,7 @@
   "name": "puppeteer-cucumber",
   "version": "1.0.0",
   "scripts": {
-    "test": "cucumber-js"
+    "test": "cucumber-js --require features/step_definitions/**/*.js --require features/step_definitions/support/world.js"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^9.3.0",
