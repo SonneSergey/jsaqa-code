@@ -1,14 +1,20 @@
 {
-  "name": "cypress-test",
+  "name": "task-7.6",
   "version": "1.0.0",
-  "description": "first tests with Cypress",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "cy:dev": "cypress open",
+    "cy:run": "cypress run",
+    "test:laptop:headed": "cypress run --headed --browser chrome --env device=laptop",
+    "test:laptop:headless": "cypress run --headless --browser chrome --env device=laptop",
+    "test:mobile:headed": "cypress run --headed --browser firefox --env device=mobile",
+    "test:mobile:headless": "cypress run --headless --browser firefox --env device=mobile"
   },
-  "author": "OM",
+  "keywords": [],
+  "author": "",
   "license": "ISC",
+  "description": "",
   "dependencies": {
-    "cypress": "^8.3.0"
+    "cypress": "^14.5.0"
   }
 }

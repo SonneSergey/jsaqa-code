@@ -1,0 +1,23 @@
+# Node.js dependencies
+node_modules/
+node_modules 2/
+
+# Cypress artifacts
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# Cypress cache
+.cache/
+
+# System files
+.DS_Store
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env files (если используются)
+.env
+node_modules

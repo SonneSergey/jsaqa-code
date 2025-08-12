@@ -46,6 +46,8 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@babel/plugin-transform-private-property-in-object": "^7.27.1",
     "babel-eslint": "^10.1.0",
     "eslint": "^7.10.0",
     "eslint-config-airbnb": "^18.2.0",
